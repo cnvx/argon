@@ -5,22 +5,12 @@
     android:background="#0099cc"
     tools:context="com.example.cnvx.argon.MainActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
-    <TextView
-        android:id="@+id/fullscreen_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:keepScreenOn="true"
-        android:text="@string/dummy_content"
-        android:textColor="#33b5e5"
-        android:textSize="50sp"
-        android:textStyle="bold" />
+    <!-- Camera preview -->
+    <com.example.cnvx.argon.FitTextureView
+        android:id="@+id/camera_preview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
