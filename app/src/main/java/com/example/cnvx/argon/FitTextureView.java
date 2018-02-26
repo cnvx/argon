@@ -2,11 +2,6 @@ package com.example.cnvx.argon;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.TextureView;
-
-import android.content.Context;
-import android.util.AttributeSet;
 import android.view.TextureView;
 
 public class FitTextureView extends TextureView {
@@ -52,5 +47,4 @@ public class FitTextureView extends TextureView {
             }
         }
     }
-
 }
