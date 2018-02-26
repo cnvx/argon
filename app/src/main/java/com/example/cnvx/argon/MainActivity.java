@@ -360,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             } catch (InterruptedException e) {
-                                throw new RuntimeException("Interrupted while waiting to lock camera opening");
+                                throw new RuntimeException("Interrupted while trying to lock camera opening");
                             }
                         }
                     }
@@ -370,6 +370,29 @@ public class MainActivity extends AppCompatActivity {
             } catch (NullPointerException e) {
                 // NullPointerException thrown when android.hardware.camera2 is unsupported
             }
+        }
+    }
+
+    private void closeCamera() {
+        try {
+            cameraLock.acquire();
+
+            if (captureSession != null) {
+                captureSession.close();
+                captureSession = null;
+            }
+            if (cameraDevice != null) {
+                cameraDevice.close();
+                cameraDevice = null;
+            }
+            if (imageReader != null) {
+                imageReader.close();
+                imageReader = null;
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted while trying to lock camera closing");
+        } finally {
+            cameraLock.release();
         }
     }
 
@@ -499,6 +522,21 @@ public class MainActivity extends AppCompatActivity {
             // Wait for the camera preview to become available
             textureView.setSurfaceTextureListener(surfaceTextureListener);
         }
+    }
+
+    @Override
+    public void onPause() {
+        closeCamera();
+        super.onPause();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration config) {
+        super.onConfigurationChanged(config);
+
+        // Adjust preview on orientation change
+        closeCamera();
+        onResume();
     }
 
     private void toggle() {
