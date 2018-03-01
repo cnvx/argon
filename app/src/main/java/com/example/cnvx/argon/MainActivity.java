@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int MAXIMUM_PREVIEW_WIDTH = 1920;
     private static final int MAXIMUM_PREVIEW_HEIGHT = 1080;
 
+    public boolean resumed;
     private FitTextureView textureView;
     private TextView textView;
     private ImageReader imageReader;
@@ -369,6 +370,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             } catch (NullPointerException e) {
                 // NullPointerException thrown when android.hardware.camera2 is unsupported
+                e.printStackTrace();
             }
         }
     }
@@ -522,12 +524,16 @@ public class MainActivity extends AppCompatActivity {
             // Wait for the camera preview to become available
             textureView.setSurfaceTextureListener(surfaceTextureListener);
         }
+
+        resumed = true;
     }
 
     @Override
     public void onPause() {
-        closeCamera();
         super.onPause();
+
+        closeCamera();
+        resumed = false;
     }
 
     @Override
@@ -535,8 +541,10 @@ public class MainActivity extends AppCompatActivity {
         super.onConfigurationChanged(config);
 
         // Adjust preview on orientation change
-        closeCamera();
-        onResume();
+        if (resumed) {
+            closeCamera();
+            onResume();
+        }
     }
 
     private void toggle() {
