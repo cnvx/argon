@@ -1,6 +1,6 @@
 package com.example.cnvx.argon;
 
-import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
+import  org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 import android.app.Activity;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -91,7 +91,24 @@ public class CobaltClassifier {
         return array;
     }
 
+    private Bitmap cropToSquare(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        Bitmap cropped;
+
+        if (width >= height)
+            cropped = Bitmap.createBitmap(bitmap, (width / 2) - (height / 2), 0, height, height);
+        else
+            cropped = Bitmap.createBitmap(bitmap, 0, (height / 2) - (width / 2), width, width);
+
+        return cropped;
+    }
+
     public String classify(Bitmap image) {
+
+        // Make the image square
+        Bitmap squaredImage = cropToSquare(image);
+
         int width = image.getWidth();
         int height = image.getHeight();
         float scaledWidth = ((float) IMAGE_SIZE) / width;
@@ -103,6 +120,7 @@ public class CobaltClassifier {
         // Lower the resolution to 24x24 pixels
         Bitmap scaledImage = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, false);
 
+        // Run inference on the prepared image
         int objectClass = runInference(bitmapToFloatArray(scaledImage));
 
         // Return the corresponding human readable label
