@@ -1,6 +1,6 @@
 package com.example.cnvx.argon;
 
-import  org.tensorflow.contrib.android.TensorFlowInferenceInterface;
+import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 import android.app.Activity;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -42,6 +42,11 @@ public class CobaltClassifier {
                     " in assets, is it called something else?");
             activity.finish();
         }
+    }
+
+    public void destroy() {
+        inference.close();
+        inference = null;
     }
 
     // Run the image through the neural network
@@ -105,7 +110,6 @@ public class CobaltClassifier {
     }
 
     public String classify(Bitmap image) {
-
         // Make the image square
         Bitmap squaredImage = cropToSquare(image);
 

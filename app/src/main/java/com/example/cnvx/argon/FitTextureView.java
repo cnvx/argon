@@ -46,5 +46,7 @@ public class FitTextureView extends TextureView {
                 setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
             }
         }
+
+
     }
 }

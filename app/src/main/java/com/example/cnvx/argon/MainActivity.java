@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -24,6 +25,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -44,10 +46,13 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
     private static final int CAMERA_REQUEST_CODE = 1;
+
+    // Maximum preview resolution supported by the camera2 API
     private static final int MAXIMUM_PREVIEW_WIDTH = 1920;
     private static final int MAXIMUM_PREVIEW_HEIGHT = 1080;
 
-    public boolean resumed;
+    private boolean resumed;
+    private boolean startClassifying = false;
     private FitTextureView textureView;
     private TextView textView;
     private ImageReader imageReader;
@@ -56,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private CameraCaptureSession captureSession;
     private CaptureRequest.Builder previewRequestBuilder;
     private CaptureRequest previewRequest;
+    private CobaltClassifier classifier = new CobaltClassifier();
+    private Activity activity = MainActivity.this;
 
     // Camera identifier
     private String camera;
@@ -63,8 +70,61 @@ public class MainActivity extends AppCompatActivity {
     // Semaphore (https://en.wikipedia.org/wiki/Semaphore_(programming)) for the camera
     private Semaphore cameraLock = new Semaphore(1);
 
-    // Handler for running background tasks
+    // Thread and handler for running background tasks
+    private HandlerThread backgroundThread;
     private Handler backgroundHandler;
+
+    // Used to make sure the threads stay synchronized
+    private final Object lock = new Object();
+
+    // Whether or not the system UI should be auto-hidden after a delay
+    private static final boolean AUTO_HIDE = true;
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+    // Some older devices needs a small delay between UI updates
+    private static final int UI_ANIMATION_DELAY = 300;
+    private final Handler hideHandler = new Handler();
+    private final Runnable hidePart2Runnable = new Runnable() {
+        @SuppressLint("InlinedApi")
+        @Override
+        public void run() {
+            // Delayed removal of status and navigation bar
+            textureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
+    };
+    private final Runnable showPart2Runnable = new Runnable() {
+        @Override
+        public void run() {
+            // Delayed display of UI elements
+            ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.show();
+            }
+        }
+    };
+    private boolean visible;
+    private final Runnable hideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            hide();
+        }
+    };
+
+    // Prevent the jarring behavior of controls going away
+    private final View.OnTouchListener delayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
 
     // Listener for the camera preview
     private final TextureView.SurfaceTextureListener surfaceTextureListener =
@@ -110,7 +170,6 @@ public class MainActivity extends AppCompatActivity {
             cameraLock.release();
             currentCameraDevice.close();
             cameraDevice = null;
-            Activity activity = MainActivity.this;
 
             if (activity != null) {
                 activity.finish();
@@ -142,19 +201,18 @@ public class MainActivity extends AppCompatActivity {
 
                                     // Start displaying the camera preview
                                     previewRequest = previewRequestBuilder.build();
-                                    captureSession.setRepeatingRequest(previewRequest, captureCallback, backgroundHandler);
+                                    captureSession.setRepeatingRequest(previewRequest,
+                                            captureCallback, backgroundHandler);
                                 } catch (CameraAccessException e) {
                                     e.printStackTrace();
                                 }
 
-                        } else {
-                            // The camera is closed
                         }
                     }
 
                     @Override
                     public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                        displayToast("Failed to configure CameraCaptureSession");
+                        displayText("Failed to configure CameraCaptureSession");
                     }
                 }, null);
             }
@@ -177,8 +235,7 @@ public class MainActivity extends AppCompatActivity {
                                        @NonNull TotalCaptureResult result) {}
     };
 
-    private void displayToast(final String text) {
-        final Activity activity = MainActivity.this;
+    private void displayText(final String text) {
 
         if (activity != null) {
             activity.runOnUiThread(new Runnable() {
@@ -198,12 +255,10 @@ public class MainActivity extends AppCompatActivity {
                 == PackageManager.PERMISSION_DENIED) {
 
             // Request camera permission
-            ActivityCompat.requestPermissions(MainActivity.this,
+            ActivityCompat.requestPermissions(activity,
                     new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST_CODE);
 
         } else {
-
-            Activity activity = MainActivity.this;
             CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
 
             // Get a list of available cameras and pick one
@@ -314,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
                             biggerThanPreview.toArray(bigger);
                             smallerThanPreview.toArray(smaller);
 
-                            Size finalPreviewResolution = new Size(0, 0);
+                            Size finalPreviewResolution;
                             if (bigger.length != 0) {
                                 Size smallest = bigger[0];
 
@@ -400,7 +455,6 @@ public class MainActivity extends AppCompatActivity {
 
     // Set up the transform for the TextureView
     private void setPreviewTransform(int previewWidth, int previewHeight) {
-        Activity activity = MainActivity.this;
 
         if (activity != null && previewResolution != null && textureView != null ) {
 
@@ -430,57 +484,67 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Whether or not the system UI should be auto-hidden after
-    private static final boolean AUTO_HIDE = true;
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+    // Try to classify a single image from the camera
+    private void classifyImage() {
+        if (activity != null && classifier != null && cameraDevice != null) {
 
-    // Some older devices needs a small delay between UI updates
-    private static final int UI_ANIMATION_DELAY = 300;
-    private final Handler mHideHandler = new Handler();
-    private View mCameraPreview;
-    private final Runnable mHidePart2Runnable = new Runnable() {
-        @SuppressLint("InlinedApi")
-        @Override
-        public void run() {
-            // Delayed removal of status and navigation bar
-            mCameraPreview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }
-    };
-    private View mControlsView;
-    private final Runnable mShowPart2Runnable = new Runnable() {
-        @Override
-        public void run() {
-            // Delayed display of UI elements
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.show();
+            // Use the TextureView as input, it's lower resolution but much faster
+            Bitmap image = textureView.getBitmap();
+
+            // Get the classification and show it
+            displayText(classifier.classify(image));
+
+            // Clear the memory for the next classification
+            image.recycle();
+        } else
+            displayText("Initializing, please wait");
+    }
+
+    // Classify input from the camera asynchronously, to be run on the background thread
+    private Runnable repeatedlyClassify =
+        new Runnable() {
+
+            @Override
+            public void run() {
+                synchronized (lock) {
+                    if (startClassifying)
+                        classifyImage();
+
+                }
+                // Post the runnable through the handler
+                backgroundHandler.post(repeatedlyClassify);
             }
-            mControlsView.setVisibility(View.VISIBLE);
-        }
-    };
-    private boolean mVisible;
-    private final Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            hide();
-        }
     };
 
-    // Prevent the jarring behavior of controls going away
-    private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            if (AUTO_HIDE) {
-                delayedHide(AUTO_HIDE_DELAY_MILLIS);
-            }
-            return false;
+    // Start a background thread and create a handler for it
+    private void startBackgroundThread() {
+        backgroundThread = new HandlerThread("background_thread");
+        backgroundThread.start();
+        backgroundHandler = new Handler(backgroundThread.getLooper());
+
+        synchronized (lock) {
+            startClassifying = true;
         }
-    };
+
+        backgroundHandler.post(repeatedlyClassify);
+    }
+
+    // Safely stop the thread and it's handler
+    private void stopBackgroundThread() {
+        backgroundThread.quitSafely();
+
+        try {
+            backgroundThread.join();
+            backgroundThread = null;
+            backgroundHandler = null;
+
+            synchronized (lock) {
+                startClassifying = false;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -488,21 +552,19 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        mVisible = true;
-        mControlsView = findViewById(R.id.fullscreen_content_controls);
-        mCameraPreview = findViewById(R.id.camera_preview);
+        visible = true;
+
+        // Get the camera preview and label text
+        textureView = findViewById(R.id.camera_preview);
+        textView = findViewById(R.id.label_text);
 
         // Set up the user interaction to manually show or hide the system UI.
-        mCameraPreview.setOnClickListener(new View.OnClickListener() {
+        textureView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 toggle();
             }
         });
-
-        // Get the camera preview and prediction text
-        textureView = (FitTextureView) findViewById(R.id.camera_preview);
-        textView = (TextView) findViewById(R.id.text);
     }
 
     @Override
@@ -511,11 +573,19 @@ public class MainActivity extends AppCompatActivity {
 
         // Trigger the initial hide() shortly after the activity has been created
         delayedHide(100);
+
+        // Prepare the neural network
+        classifier.create(activity, activity.getAssets());
+
+        // Start the real-time classification thread
+        startBackgroundThread();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        startBackgroundThread();
 
         if (textureView.isAvailable()) {
             // Start the camera
@@ -530,10 +600,18 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onPause() {
-        super.onPause();
-
         closeCamera();
+        stopBackgroundThread();
         resumed = false;
+
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        classifier.destroy();
+
+        super.onDestroy();
     }
 
     @Override
@@ -542,13 +620,14 @@ public class MainActivity extends AppCompatActivity {
 
         // Adjust preview on orientation change
         if (resumed) {
+            stopBackgroundThread();
             closeCamera();
             onResume();
         }
     }
 
     private void toggle() {
-        if (mVisible) {
+        if (visible) {
             hide();
         } else {
             show();
@@ -561,29 +640,28 @@ public class MainActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
-        mControlsView.setVisibility(View.GONE);
-        mVisible = false;
+        visible = false;
 
         // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable);
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
+        hideHandler.removeCallbacks(showPart2Runnable);
+        hideHandler.postDelayed(hidePart2Runnable, UI_ANIMATION_DELAY);
     }
 
     @SuppressLint("InlinedApi")
     private void show() {
         // Show the system bar
-        mCameraPreview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        textureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-        mVisible = true;
+        visible = true;
 
         // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable);
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
+        hideHandler.removeCallbacks(hidePart2Runnable);
+        hideHandler.postDelayed(showPart2Runnable, UI_ANIMATION_DELAY);
     }
 
     // Schedules a call to hide() in delay milliseconds, canceling any previously scheduled calls
     private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+        hideHandler.removeCallbacks(hideRunnable);
+        hideHandler.postDelayed(hideRunnable, delayMillis);
     }
 }
