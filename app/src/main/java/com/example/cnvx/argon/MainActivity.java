@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int MAXIMUM_PREVIEW_WIDTH = 1920;
     private static final int MAXIMUM_PREVIEW_HEIGHT = 1080;
 
-    private boolean resumed;
     private boolean startClassifying = false;
     private FitTextureView textureView;
     private TextView textView;
@@ -509,12 +508,12 @@ public class MainActivity extends AppCompatActivity {
                 synchronized (lock) {
                     if (startClassifying)
                         classifyImage();
-
                 }
+
                 // Post the runnable through the handler
                 backgroundHandler.post(repeatedlyClassify);
             }
-    };
+        };
 
     // Start a background thread and create a handler for it
     private void startBackgroundThread() {
@@ -534,13 +533,13 @@ public class MainActivity extends AppCompatActivity {
         backgroundThread.quitSafely();
 
         try {
-            backgroundThread.join();
-            backgroundThread = null;
-            backgroundHandler = null;
-
             synchronized (lock) {
                 startClassifying = false;
             }
+
+            backgroundThread.join();
+            backgroundThread = null;
+            backgroundHandler = null;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -571,9 +570,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
-        // Trigger the initial hide() shortly after the activity has been created
-        delayedHide(100);
-
         // Prepare the neural network
         classifier.create(activity, activity.getAssets());
 
@@ -594,36 +590,21 @@ public class MainActivity extends AppCompatActivity {
             // Wait for the camera preview to become available
             textureView.setSurfaceTextureListener(surfaceTextureListener);
         }
-
-        resumed = true;
     }
 
     @Override
     public void onPause() {
+        super.onPause();
+
         closeCamera();
         stopBackgroundThread();
-        resumed = false;
-
-        super.onPause();
     }
 
     @Override
     public void onDestroy() {
-        classifier.destroy();
-
         super.onDestroy();
-    }
 
-    @Override
-    public void onConfigurationChanged(Configuration config) {
-        super.onConfigurationChanged(config);
-
-        // Adjust preview on orientation change
-        if (resumed) {
-            stopBackgroundThread();
-            closeCamera();
-            onResume();
-        }
+        classifier.destroy();
     }
 
     private void toggle() {
