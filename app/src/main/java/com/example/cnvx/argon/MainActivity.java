@@ -496,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
             // Clear the memory for the next classification
             image.recycle();
         } else
-            displayText("Initializing, please wait");
+            displayText("Initializing");
     }
 
     // Classify input from the camera asynchronously, to be run on the background thread

@@ -17,6 +17,7 @@ public class CobaltClassifier {
     private static final String OUTPUT_NODE = "third_fully_connected_layer/output:0";
     private static final String[] OUTPUT_NODES = {OUTPUT_NODE};
     private static final int IMAGE_SIZE = 24;
+    private static final float PROBABILITY_THRESHOLD = 0.90f;
     private static final List<String> LABELS = new ArrayList<String>() {{
         add("airplane");
         add("automobile");
@@ -30,6 +31,7 @@ public class CobaltClassifier {
         add("truck");
     }};
     private float[] output = new float[LABELS.size()];
+    private String prediction;
 
     private TensorFlowInferenceInterface inference;
 
@@ -72,6 +74,10 @@ public class CobaltClassifier {
             }
         }
 
+        // Make sure the network is reasonably confident in it's prediction
+        if (probability < PROBABILITY_THRESHOLD)
+            objectClass = -1;
+
         return objectClass;
     }
 
@@ -113,8 +119,8 @@ public class CobaltClassifier {
         // Make the image square
         Bitmap squaredImage = cropToSquare(image);
 
-        int width = image.getWidth();
-        int height = image.getHeight();
+        int width = squaredImage.getWidth();
+        int height = squaredImage.getHeight();
         float scaledWidth = ((float) IMAGE_SIZE) / width;
         float scaledHeight = ((float) IMAGE_SIZE) / height;
 
@@ -122,12 +128,35 @@ public class CobaltClassifier {
         matrix.postScale(scaledWidth, scaledHeight);
 
         // Lower the resolution to 24x24 pixels
-        Bitmap scaledImage = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, false);
+        Bitmap scaledImage = Bitmap.createBitmap(squaredImage, 0, 0,
+                squaredImage.getWidth(), squaredImage.getHeight(), matrix, false);
 
-        // Run inference on the prepared image
-        int objectClass = runInference(bitmapToFloatArray(scaledImage));
+        // Feed a single image with 3 colour channels
+        inference.feed(INPUT_NODE, bitmapToFloatArray(scaledImage), 1, IMAGE_SIZE, IMAGE_SIZE, 3);
 
-        // Return the corresponding human readable label
-        return LABELS.get(objectClass);
+        // Run the network
+        inference.run(OUTPUT_NODES);
+
+        // Get the classification
+        inference.fetch(OUTPUT_NODE, output);
+
+        float probability = output[0];
+        int objectClass = 0;
+
+        // Get the object class
+        for (int index = 0; index < output.length; index++) {
+            if (output[index] > probability) {
+                probability = output[index];
+                objectClass = index;
+            }
+        }
+
+        if (probability >= PROBABILITY_THRESHOLD) {
+            // Get the corresponding human readable label
+            prediction = LABELS.get(objectClass);
+        } else
+            prediction = "";
+
+        return prediction;
     }
 }
