@@ -4,9 +4,19 @@ Computer vision object classifier for Android using the [cobalt neural network](
 
 ## About
 
-A sync is required before you can run the app, this can be done in Android Studio:
+This app is capable of recognising 10 types of objects (taken from the [CIFAR-10 data set](https://www.cs.toronto.edu/~kriz/cifar.html)):
+
+![CIFAR-10 object classes](objects.png)
+
+It would be relatively easy to retrain the neural network with more object classes, provided you have enough training data.
+
+## Install
+
+Clone or download this repository and perform a Gradle sync, this can be done from Android Studio:
 1. Build -> Make Project
 2. Tools -> Android -> Sync Project with Gradle Files
+
+Now you should be able to build and install the APK.
 
 ## License
 
