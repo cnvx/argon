@@ -12,11 +12,17 @@ It would be relatively easy to retrain the neural network with more object class
 
 ## Install
 
+### Just the app
+
+Simply download and install [this APK](https://github.com/cnvx/argon/raw/master/argon.apk).
+
+### Build it yourself
+
 Clone or download this repository and perform a Gradle sync, this can be done from Android Studio:
 1. Build -> Make Project
-2. Tools -> Android -> Sync Project with Gradle Files
+2. File -> Sync Project with Gradle Files
 
-Now you should be able to build and install the APK.
+Now you should be able to build and run the app.
 
 ## License
 

@@ -37,6 +37,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.TextView;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int MAXIMUM_PREVIEW_HEIGHT = 1080;
 
     private boolean startClassifying = false;
-    private FitTextureView textureView;
-    private TextView textView;
+    private FitTextureView cameraPreview;
+    private TextView labelText;
     private ImageReader imageReader;
     private Size previewResolution;
     private CameraDevice cameraDevice;
@@ -88,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             // Delayed removal of status and navigation bar
-            textureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+            cameraPreview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -178,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void createCameraPreviewSession() {
         try {
-            SurfaceTexture texture = textureView.getSurfaceTexture();
+            SurfaceTexture texture = cameraPreview.getSurfaceTexture();
 
             if (texture != null) {
                 texture.setDefaultBufferSize(previewResolution.getWidth(), previewResolution.getHeight());
@@ -240,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    textView.setText(text);
+                    labelText.setText(text);
                 }
             });
         }
@@ -396,10 +397,10 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
-                                textureView.setAspectRatio(finalPreviewResolution.getWidth(),
+                                cameraPreview.setAspectRatio(finalPreviewResolution.getWidth(),
                                         finalPreviewResolution.getHeight());
                             else
-                                textureView.setAspectRatio(finalPreviewResolution.getHeight(),
+                                cameraPreview.setAspectRatio(finalPreviewResolution.getHeight(),
                                         finalPreviewResolution.getWidth());
 
                             previewResolution = finalPreviewResolution;
@@ -455,7 +456,7 @@ public class MainActivity extends AppCompatActivity {
     // Set up the transform for the TextureView
     private void setPreviewTransform(int previewWidth, int previewHeight) {
 
-        if (activity != null && previewResolution != null && textureView != null ) {
+        if (activity != null && previewResolution != null && cameraPreview != null ) {
 
             int orientation = activity.getWindowManager().getDefaultDisplay().getRotation();
             Matrix matrix = new Matrix();
@@ -479,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
                 matrix.postRotate(180, center.x, center.y);
             }
 
-            textureView.setTransform(matrix);
+            cameraPreview.setTransform(matrix);
         }
     }
 
@@ -488,7 +489,7 @@ public class MainActivity extends AppCompatActivity {
         if (activity != null && classifier != null && cameraDevice != null) {
 
             // Use the TextureView as input, it's lower resolution but much faster
-            Bitmap image = textureView.getBitmap();
+            Bitmap image = cameraPreview.getBitmap();
 
             // Get the classification and show it
             displayText(classifier.classify(image));
@@ -554,11 +555,11 @@ public class MainActivity extends AppCompatActivity {
         visible = true;
 
         // Get the camera preview and label text
-        textureView = findViewById(R.id.camera_preview);
-        textView = findViewById(R.id.label_text);
+        cameraPreview = (FitTextureView) findViewById(R.id.camera_preview);
+        labelText = (TextView) findViewById(R.id.label_text);
 
         // Set up the user interaction to manually show or hide the system UI.
-        textureView.setOnClickListener(new View.OnClickListener() {
+        cameraPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 toggle();
@@ -583,12 +584,12 @@ public class MainActivity extends AppCompatActivity {
 
         startBackgroundThread();
 
-        if (textureView.isAvailable()) {
+        if (cameraPreview.isAvailable()) {
             // Start the camera
-            initializeCamera(textureView.getWidth(), textureView.getHeight());
+            initializeCamera(cameraPreview.getWidth(), cameraPreview.getHeight());
         } else {
             // Wait for the camera preview to become available
-            textureView.setSurfaceTextureListener(surfaceTextureListener);
+            cameraPreview.setSurfaceTextureListener(surfaceTextureListener);
         }
     }
 
@@ -631,7 +632,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("InlinedApi")
     private void show() {
         // Show the system bar
-        textureView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        cameraPreview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         visible = true;
 

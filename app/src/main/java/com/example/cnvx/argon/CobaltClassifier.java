@@ -42,6 +42,7 @@ public class CobaltClassifier {
         } catch (RuntimeException e) {
             Log.e("argon", "Could not find exported network " + NEURAL_NETWORK +
                     " in assets, is it called something else?");
+
             activity.finish();
         }
     }
