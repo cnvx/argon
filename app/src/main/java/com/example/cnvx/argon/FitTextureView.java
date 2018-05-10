@@ -6,8 +6,8 @@ import android.view.TextureView;
 
 public class FitTextureView extends TextureView {
 
-    private int mRatioWidth = 0;
-    private int mRatioHeight = 0;
+    private int mRatioWidth;
+    private int mRatioHeight;
     private int newWidth;
     private int newHeight;
 
@@ -35,10 +35,9 @@ public class FitTextureView extends TextureView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
+
         if (mRatioWidth == 0 || mRatioHeight == 0) {
             newWidth = width;
             newHeight = height;

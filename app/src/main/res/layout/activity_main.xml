@@ -1,25 +1,35 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#000000"
-    tools:context="com.example.cnvx.argon.MainActivity">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:background="#000000"
+                tools:context="com.example.cnvx.argon.MainActivity">
 
     <!-- Camera preview -->
-
     <com.example.cnvx.argon.FitTextureView
-        android:id="@+id/camera_preview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+            android:id="@+id/camera_preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
+    <!-- preview overlay container -->
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+            android:id="@+id/overlay_container"
+            android:layout_width="0dp"
+            android:layout_height="0dp">
 
-        <!-- Classification label text -->
+        <!-- Preview overlay -->
+        <ImageView
+                android:id= "@+id/preview_overlay"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                app:srcCompat="@drawable/rectangle" />
 
-        <TextView
+    </RelativeLayout>
+
+    <!-- Classification label text -->
+    <TextView
             android:id="@+id/label_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -28,8 +38,7 @@
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
             android:textColor="@color/colorAccent"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            style="@style/shadow" />
 
-    </RelativeLayout>
-
-</FrameLayout>
+</RelativeLayout>

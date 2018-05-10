@@ -33,6 +33,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.ViewTreeObserver;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean startClassifying;
     private FitTextureView cameraPreview;
     private TextView labelText;
+    private RelativeLayout overlayContainer;
+    private ImageView previewOverlay;
+    private ViewTreeObserver observer;
     private ImageReader imageReader;
     private Size previewResolution;
     private CameraDevice cameraDevice;
@@ -511,6 +517,39 @@ public class MainActivity extends AppCompatActivity {
         // Get the camera preview and label text
         cameraPreview = (FitTextureView) findViewById(R.id.camera_preview);
         labelText = (TextView) findViewById(R.id.label_text);
+        overlayContainer = (RelativeLayout) findViewById(R.id.overlay_container);
+        previewOverlay = (ImageView) findViewById(R.id.preview_overlay);
+
+        // Align the preview overlay
+        observer = cameraPreview.getViewTreeObserver();
+        observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int width = cameraPreview.getWidth();
+                int height = cameraPreview.getHeight();
+                int overlayWidth;
+                int overlayHeight;
+
+                if (overlayContainer.getLayoutParams().width != width ||
+                        overlayContainer.getLayoutParams().height != height) {
+
+                    // Make the overlay square
+                    if (width < height) {
+                        overlayWidth = width;
+                        overlayHeight = width;
+                    } else {
+                        overlayWidth = height;
+                        overlayHeight = width;
+                    }
+
+                    overlayContainer.getLayoutParams().width = width;
+                    overlayContainer.getLayoutParams().height = height;
+                    previewOverlay.getLayoutParams().width = overlayWidth;
+                    previewOverlay.getLayoutParams().height = overlayHeight;
+                    overlayContainer.requestLayout();
+                }
+            }
+        });
     }
 
     @Override
