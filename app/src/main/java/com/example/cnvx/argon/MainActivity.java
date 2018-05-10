@@ -3,6 +3,7 @@ package com.example.cnvx.argon;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -33,7 +34,6 @@ import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -395,6 +395,18 @@ public class MainActivity extends AppCompatActivity {
             throw new RuntimeException("Interrupted while trying to lock camera closing");
         } finally {
             cameraLock.release();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // Restart the activity
+            Intent intent = getIntent();
+            activity.finish();
+            startActivity(intent);
+        } else {
+            activity.finish();
         }
     }
 
