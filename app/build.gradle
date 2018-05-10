@@ -4,22 +4,22 @@ android {
     compileSdkVersion 25
     defaultConfig {
         applicationId "com.example.cnvx.argon"
-        minSdkVersion 23
+        minSdkVersion 21
         targetSdkVersion 25
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.0.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
 
 dependencies {
-    implementation 'org.tensorflow:tensorflow-android:1.6.0-rc1'
+    implementation 'org.tensorflow:tensorflow-android:1.8.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:25.4.0'
     implementation 'com.android.support:support-v4:25.4.0'
