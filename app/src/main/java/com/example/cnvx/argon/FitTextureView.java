@@ -8,6 +8,8 @@ public class FitTextureView extends TextureView {
 
     private int mRatioWidth = 0;
     private int mRatioHeight = 0;
+    private int newWidth;
+    private int newHeight;
 
     public FitTextureView(Context context) {
         this(context, null);
@@ -38,13 +40,18 @@ public class FitTextureView extends TextureView {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
         if (mRatioWidth == 0 || mRatioHeight == 0) {
-            setMeasuredDimension(width, height);
+            newWidth = width;
+            newHeight = height;
         } else {
             if (width < height * mRatioWidth / mRatioHeight) {
-                setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
+                newWidth = width;
+                newHeight = width * mRatioHeight / mRatioWidth;
             } else {
-                setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
+                newWidth = height * mRatioWidth / mRatioHeight;
+                newHeight = height;
             }
         }
+
+        setMeasuredDimension(newWidth, newHeight);
     }
 }

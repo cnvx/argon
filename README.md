@@ -14,7 +14,11 @@ It would be relatively easy to retrain the neural network with more object class
 
 ### Just the app
 
-Simply download and install [this APK](https://github.com/cnvx/argon/raw/master/argon.apk).
+Enable installation of apps from unknown sources:
+1. Settings -> Security
+2. Enable *Unknown sources*
+
+Then download and install [this APK](https://github.com/cnvx/argon/raw/master/argon.apk).
 
 ### Build it yourself
 
