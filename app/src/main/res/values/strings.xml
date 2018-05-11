@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Argon Object Classifier</string>
+    <string name="preview_overlay_description">Overlay for the camera preview</string>
 </resources>

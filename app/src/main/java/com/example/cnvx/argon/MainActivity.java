@@ -356,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
 
                             previewResolution = finalPreviewResolution;
                             camera = id;
-                            setPreviewTransform(width, height);
+                            setPreviewTransform(previewWidth, previewHeight);
 
                             try {
                                 if (!cameraLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
@@ -447,12 +447,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Make sure the orientation of the bitmap matches the camera preview
+    private Bitmap rotateBitmap(Bitmap bitmap) {
+        Matrix matrix = new Matrix();
+
+        if (activity != null) {
+            int orientation = activity.getWindowManager().getDefaultDisplay().getRotation();
+
+            if (Surface.ROTATION_90 == orientation || Surface.ROTATION_270 == orientation) {
+                matrix.postRotate(90 * (orientation - 2));
+            } else if (Surface.ROTATION_180 == orientation) {
+                matrix.postRotate(180);
+            }
+        }
+
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+    }
+
     // Try to classify a single image from the camera
     private void classifyImage() {
         if (activity != null && classifier != null && cameraDevice != null) {
 
             // Use the TextureView as input, it's lower resolution but much faster
-            Bitmap image = cameraPreview.getBitmap();
+            Bitmap image = rotateBitmap(cameraPreview.getBitmap());
 
             // Get the classification and show it
             displayText(classifier.classify(image));
@@ -514,7 +531,7 @@ public class MainActivity extends AppCompatActivity {
         startClassifying = false;
         setContentView(R.layout.activity_main);
 
-        // Get the camera preview and label text
+        // Get the views
         cameraPreview = (FitTextureView) findViewById(R.id.camera_preview);
         labelText = (TextView) findViewById(R.id.label_text);
         overlayContainer = (RelativeLayout) findViewById(R.id.overlay_container);
