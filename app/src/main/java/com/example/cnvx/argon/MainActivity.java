@@ -288,8 +288,6 @@ public class MainActivity extends AppCompatActivity {
                             if (maxPreviewHeight > MAXIMUM_PREVIEW_HEIGHT)
                                 maxPreviewHeight = MAXIMUM_PREVIEW_HEIGHT;
 
-                            // Get the optimal preview size
-
                             Size[] outputSizes = stream.getOutputSizes(SurfaceTexture.class);
                             List<Size> biggerThanPreview = new ArrayList<>();
                             List<Size> smallerThanPreview = new ArrayList<>();
@@ -420,7 +418,6 @@ public class MainActivity extends AppCompatActivity {
     private void setPreviewTransform(int previewWidth, int previewHeight) {
 
         if (activity != null && previewResolution != null && cameraPreview != null ) {
-
             int orientation = activity.getWindowManager().getDefaultDisplay().getRotation();
             Matrix matrix = new Matrix();
             RectF viewRectangle = new RectF(0, 0, previewWidth, previewHeight);
@@ -449,16 +446,13 @@ public class MainActivity extends AppCompatActivity {
 
     // Make sure the orientation of the bitmap matches the camera preview
     private Bitmap rotateBitmap(Bitmap bitmap) {
+        int orientation = activity.getWindowManager().getDefaultDisplay().getRotation();
         Matrix matrix = new Matrix();
 
-        if (activity != null) {
-            int orientation = activity.getWindowManager().getDefaultDisplay().getRotation();
-
-            if (Surface.ROTATION_90 == orientation || Surface.ROTATION_270 == orientation) {
-                matrix.postRotate(90 * (orientation - 2));
-            } else if (Surface.ROTATION_180 == orientation) {
-                matrix.postRotate(180);
-            }
+        if (Surface.ROTATION_90 == orientation || Surface.ROTATION_270 == orientation) {
+            matrix.postRotate(90 * (orientation - 2));
+        } else if (Surface.ROTATION_180 == orientation) {
+            matrix.postRotate(180);
         }
 
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);

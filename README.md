@@ -1,6 +1,6 @@
-# argon
+# Argon Object Classifier
 
-Computer vision object classifier for Android using the [cobalt neural network](https://github.com/cnvx/cobalt).
+Computer vision object classifier for Android using the [Cobalt Neural Network](https://github.com/cnvx/cobalt).
 
 ## About
 

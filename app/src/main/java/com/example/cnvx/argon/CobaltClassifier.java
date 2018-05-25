@@ -52,36 +52,6 @@ public class CobaltClassifier {
         inference = null;
     }
 
-    // Run the image through the neural network
-    private int runInference(final float[] image) {
-
-        // Feed 1 24x24 pixel image with 3 colour channels
-        inference.feed(INPUT_NODE, image, 1, IMAGE_SIZE, IMAGE_SIZE, 3);
-
-        // Run the network
-        inference.run(OUTPUT_NODES);
-
-        // Get the classification
-        inference.fetch(OUTPUT_NODE, output);
-
-        float probability = output[0];
-        int objectClass = 0;
-
-        // Get the object class
-        for (int index = 0; index < output.length; index++) {
-            if (output[index] > probability) {
-                probability = output[index];
-                objectClass = index;
-            }
-        }
-
-        // Make sure the network is reasonably confident in it's prediction
-        if (probability < PROBABILITY_THRESHOLD)
-            objectClass = -1;
-
-        return objectClass;
-    }
-
     // Return a flattened (1 dimensional) array, to be reshaped to 24x24x3 later, with the following internal structure:
     // [R1, G1, B1, R2, G2, B2, R3, G3, B3, ...] where each element represents a single pixels red, green or blue value
     private float[] bitmapToFloatArray(Bitmap image) {
