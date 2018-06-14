@@ -472,7 +472,7 @@ public class MainActivity extends AppCompatActivity {
             // Clear the memory for the next classification
             image.recycle();
         } else {
-            displayText("Initializing");
+            displayText(getString(R.string.initialisation_text));
         }
     }
 
@@ -566,19 +566,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-
-        // Prepare the neural network
-        classifier.create(activity, activity.getAssets());
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-
-        // Start the real-time classification thread
-        startBackgroundThread();
 
         if (cameraPreview.isAvailable()) {
             // Start the camera
@@ -586,6 +575,16 @@ public class MainActivity extends AppCompatActivity {
         } else {
             // Wait for the camera preview to become available
             cameraPreview.setSurfaceTextureListener(surfaceTextureListener);
+        }
+
+        if (!classifier.created) {
+            // Prepare the neural network
+            classifier.create(activity, activity.getAssets());
+        }
+
+        if (backgroundThread == null) {
+            // Start the real-time classification thread
+            startBackgroundThread();
         }
     }
 

@@ -25,16 +25,8 @@
     </RelativeLayout>
 
     <!-- Classification label text -->
-    <TextView
-            android:id="@+id/label_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentStart="true"
-            android:textAlignment="center"
-            android:textAppearance="@style/TextAppearance.AppCompat.Display1"
-            android:textColor="@color/colorAccent"
-            android:textStyle="bold"
-            style="@style/shadow" />
+    <TextView android:id="@+id/label_text" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentBottom="true" android:layout_alignParentStart="true"
+        android:textAlignment="center" android:textAppearance="@style/TextAppearance.AppCompat.Display1" android:textColor="@color/colorAccent" android:textStyle="bold" style="@style/shadow"
+        android:text="@string/initialisation_text" />
 
 </RelativeLayout>
