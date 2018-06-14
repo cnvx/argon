@@ -304,10 +304,11 @@ public class MainActivity extends AppCompatActivity {
                                             outputResolution.getWidth() / outputResolution.getHeight()) {
 
                                         if (outputSizes[index].getWidth() >= previewWidth &&
-                                                outputSizes[index].getHeight() >= previewHeight)
+                                                outputSizes[index].getHeight() >= previewHeight) {
                                             biggerThanPreview.add(outputSizes[index]);
-                                        else
+                                        } else {
                                             smallerThanPreview.add(outputSizes[index]);
+                                        }
                                     }
                                 }
                             }
@@ -340,17 +341,17 @@ public class MainActivity extends AppCompatActivity {
 
                                 finalPreviewResolution = biggest;
                             } else {
-
                                 // If all else fails use the first resolution
                                 finalPreviewResolution = outputSizes[0];
                             }
 
-                            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+                            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
                                 cameraPreview.setAspectRatio(finalPreviewResolution.getWidth(),
                                         finalPreviewResolution.getHeight());
-                            else
+                            } else {
                                 cameraPreview.setAspectRatio(finalPreviewResolution.getHeight(),
                                         finalPreviewResolution.getWidth());
+                            }
 
                             previewResolution = finalPreviewResolution;
                             camera = id;
@@ -470,8 +471,9 @@ public class MainActivity extends AppCompatActivity {
 
             // Clear the memory for the next classification
             image.recycle();
-        } else
+        } else {
             displayText("Initializing");
+        }
     }
 
     // Classify input from the camera asynchronously, to be run on the background thread
