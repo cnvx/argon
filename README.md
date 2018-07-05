@@ -1,3 +1,5 @@
+**This project has been moved to https://gitlab.com/archiekennedy/argon, consider this repository outdated.**
+
 # Argon Object Classifier
 
 Computer vision object classifier for Android using the [Cobalt Neural Network](https://github.com/cnvx/cobalt).
